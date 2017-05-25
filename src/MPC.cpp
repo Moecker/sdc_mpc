@@ -49,11 +49,17 @@ class FG_eval
         // the Solver function below.
         // The cost is stored is the first element of `fg`.
         // Any additions to the cost should be added to `fg[0]`.
-        fg[0] = 1;
+        fg[0] = 0;
 
         // Reference State Cost
         // TODO: Define the cost related the reference state and
         // any anything you think may be beneficial.
+        //        for (int t = 0; t < N; t++)
+        //        {
+        //            fg[0] += pow(epsi[t], 2);
+        //            fg[0] += pow(cte[t], 2);
+        //        }
+        fg[0] += 1 / (vars[v_start] + 1);
 
         //
         // Setup Constraints
@@ -69,6 +75,8 @@ class FG_eval
         fg[1 + y_start] = vars[y_start];
         fg[1 + psi_start] = vars[psi_start];
         fg[1 + v_start] = vars[v_start];
+        fg[1 + cte_start] = vars[cte_start];
+        fg[1 + epsi_start] = vars[epsi_start];
 
         // The rest of the constraints
         for (int i = 0; i < N - 1; i++)

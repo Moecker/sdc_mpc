@@ -133,18 +133,30 @@ int main()
 
                     std::cout << "Solving ..." << endl;
                     vector<double> solution = mpc.Solve(state, coeffs);
-                    std::cout << "Solved with solution: \n" << solution.size() << endl;
+                    std::cout << "Solved with solution: " << solution.size() << endl;
 
-                    double steer_value = solution[0];
-                    double throttle_value = solution[1];
+                    //                    Eigen::VectorXd next_state(MPC::kStateVectorSize);
+                    //                    auto dt = 0.1;
+                    //                    next_state[0] = px + v * cos(psi) * dt;
+                    //                    next_state[1] = py + v * sin(psi) * dt;
+                    //                    next_state[2] = psi + (v / Lf) * delta * dt;
+                    //                    next_state[3] = v + a * dt;
+                    //                    next_state[4] = 0.0;
+                    //                    next_state[5] = 0.0;
+
+                    double steer_value = solution[6];
+                    double throttle_value = 0.1; // solution[7];
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
                     msgJson["throttle"] = throttle_value;
 
+                    std::cout << "Steering Angle: " << steer_value << endl;
+                    std::cout << "Throttle: " << throttle_value << endl;
+
                     // Display the MPC predicted trajectory
-                    vector<double> mpc_x_vals;
-                    vector<double> mpc_y_vals;
+                    vector<double> mpc_x_vals = ptsx;
+                    vector<double> mpc_y_vals = ptsy;
 
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Green line
