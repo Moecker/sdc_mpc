@@ -11,6 +11,8 @@ class MPC
   public:
     MPC();
 
+    static const auto kStateVectorSize = 6;
+
     virtual ~MPC();
 
     // Solve the model given an initial state and polynomial coefficients.

@@ -95,7 +95,7 @@ int main()
         // The 4 signifies a websocket message
         // The 2 signifies a websocket event
         string sdata = string(data).substr(0, length);
-        cout << sdata << endl;
+        std::cout << sdata << endl;
         if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2')
         {
             string s = hasData(sdata);
@@ -108,19 +108,35 @@ int main()
                     // j[1] is the data JSON object
                     vector<double> ptsx = j[1]["ptsx"];
                     vector<double> ptsy = j[1]["ptsy"];
+
+                    Eigen::Map<Eigen::VectorXd> all_x(&ptsx[0], ptsx.size());
+                    Eigen::Map<Eigen::VectorXd> all_y(&ptsy[0], ptsy.size());
+
                     double px = j[1]["x"];
                     double py = j[1]["y"];
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
 
-                    /*
-                    * TODO: Calculate steeering angle and throttle using MPC.
-                    *
-                    * Both are in between [-1, 1].
-                    *
-                    */
-                    double steer_value;
-                    double throttle_value;
+                    // TODO: calculate the cross track error
+                    double cte = 0.0;
+
+                    // TODO: calculate the orientation error
+                    double epsi = 0.0;
+
+                    // TODO: Calculate steeering angle and throttle using MPC.
+                    std::cout << "Polyfitting ..." << endl;
+                    Eigen::VectorXd coeffs = polyfit(all_x, all_y, 3);
+                    std::cout << "Coeffs are: \n" << coeffs << endl;
+
+                    Eigen::VectorXd state(MPC::kStateVectorSize);
+                    state << px, py, psi, v, cte, epsi;
+
+                    std::cout << "Solving ..." << endl;
+                    vector<double> solution = mpc.Solve(state, coeffs);
+                    std::cout << "Solved with solution: \n" << solution.size() << endl;
+
+                    double steer_value = solution[0];
+                    double throttle_value = solution[1];
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
@@ -147,7 +163,8 @@ int main()
                     msgJson["next_y"] = next_y_vals;
 
                     auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-                    std::cout << msg << std::endl;
+                    // std::cout << msg << std::endl;
+
                     // Latency
                     // The purpose is to mimic real driving conditions where
                     // the car does actuate the commands instantly.
