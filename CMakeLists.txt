@@ -9,6 +9,7 @@ add_definitions(-DHAVE_CSTDDEF)
 
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
+set(CMAKE_BUILD_TYPE "Debug")
 
 set(sources src/MPC.cpp src/main.cpp)
 

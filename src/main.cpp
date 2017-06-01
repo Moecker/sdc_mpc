@@ -117,20 +117,33 @@ int main()
                     double psi = j[1]["psi"];
                     double v = j[1]["speed"];
 
-                    // TODO: calculate the cross track error
-                    double cte = 0.0;
-
-                    // TODO: calculate the orientation error
-                    double epsi = 0.0;
-
-                    // TODO: Calculate steeering angle and throttle using MPC.
                     std::cout << "Polyfitting ..." << endl;
                     Eigen::VectorXd coeffs = polyfit(all_x, all_y, 3);
                     std::cout << "Coeffs are: \n" << coeffs << endl;
 
+                    auto f_of_x = polyeval(coeffs, px);
+
+                    Eigen::VectorXd coeffs_prime(3);
+                    coeffs_prime[0] = 3 * coeffs[0];
+                    coeffs_prime[1] = 2 * coeffs[1];
+                    coeffs_prime[2] = 1 * coeffs[2];
+
+                    auto f_prime_of_x = polyeval(coeffs_prime, px);
+                    auto psi_dest = atan(f_prime_of_x);
+
+                    auto e_psi = psi - psi_dest;
+
+                    // TODO: calculate the cross track error
+                    double cte = f_of_x - py + (v * sin(e_psi) * MPC::dt);
+
+                    // TODO: calculate the orientation error
+                    auto delta = 0.0;
+                    double epsi = psi - psi_dest + (v / MPC::Lf * delta * MPC::dt);
+
                     Eigen::VectorXd state(MPC::kStateVectorSize);
                     state << px, py, psi, v, cte, epsi;
 
+                    // TODO: Calculate steeering angle and throttle using MPC.
                     std::cout << "Solving ..." << endl;
                     vector<double> solution = mpc.Solve(state, coeffs);
                     std::cout << "Solved with solution: " << solution.size() << endl;
@@ -145,7 +158,7 @@ int main()
                     //                    next_state[5] = 0.0;
 
                     double steer_value = solution[6];
-                    double throttle_value = 0.1; // solution[7];
+                    double throttle_value = 0.1;  // solution[7];
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
@@ -165,8 +178,8 @@ int main()
                     msgJson["mpc_y"] = mpc_y_vals;
 
                     // Display the waypoints/reference line
-                    vector<double> next_x_vals;
-                    vector<double> next_y_vals;
+                    vector<double> next_x_vals = ptsx;
+                    vector<double> next_y_vals = ptsy;
 
                     //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
                     // the points in the simulator are connected by a Yellow line

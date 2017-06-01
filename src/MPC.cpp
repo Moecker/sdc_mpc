@@ -5,33 +5,17 @@
 
 using CppAD::AD;
 
-// TODO: Set the timestep length and duration
-size_t N = 10;
-double dt = 1;
-
-// This value assumes the model presented in the classroom is used.
-//
-// It was obtained by measuring the radius formed by running the vehicle in the
-// simulator around in a circle with a constant steering angle and velocity on a
-// flat terrain.
-//
-// Lf was tuned until the the radius formed by the simulating the model
-// presented in the classroom matched the previous radius.
-//
-// This is the length from front to CoG that has a similar radius.
-const double Lf = 2.67;
-
 // The solver takes all the state variables and actuator
 // variables in a singular vector. Thus, we should to establish
 // when one variable starts and another ends to make our lifes easier.
 size_t x_start = 0;
-size_t y_start = x_start + N;
-size_t psi_start = y_start + N;
-size_t v_start = psi_start + N;
-size_t cte_start = v_start + N;
-size_t epsi_start = cte_start + N;
-size_t delta_start = epsi_start + N;
-size_t a_start = delta_start + N - 1;
+size_t y_start = x_start + MPC::N;
+size_t psi_start = y_start + MPC::N;
+size_t v_start = psi_start + MPC::N;
+size_t cte_start = v_start + MPC::N;
+size_t epsi_start = cte_start + MPC::N;
+size_t delta_start = epsi_start + MPC::N;
+size_t a_start = delta_start + MPC::N - 1;
 
 class FG_eval
 {
@@ -47,19 +31,32 @@ class FG_eval
         // fg a vector of constraints, x is a vector of constraints.
         // NOTE: You'll probably go back and forth between this function and
         // the Solver function below.
+
         // The cost is stored is the first element of `fg`.
         // Any additions to the cost should be added to `fg[0]`.
         fg[0] = 0;
 
+        auto cte = &vars[cte_start];
+        auto epsi = &vars[epsi_start];
+        auto v = &vars[v_start];
+        auto delta = &vars[delta_start];
+        auto a = &vars[a_start];
+
+        for (int t = 0; t < MPC::N; t++)
+        {
+            fg[0] += pow(cte[t], 2);
+            fg[0] += pow(epsi[t], 2);
+            fg[0] += pow(v[t] - 35, 2);  // (Assuming 35 mph is the speed limit)
+            fg[0] += pow(delta[t], 2);
+            fg[0] += pow(delta[t + 1] - delta[t], 2);
+            fg[0] += pow(a[t + 1] - a[t], 2);
+        }
+
+        std::cout << fg[0] << std::endl;
+
         // Reference State Cost
         // TODO: Define the cost related the reference state and
         // any anything you think may be beneficial.
-        //        for (int t = 0; t < N; t++)
-        //        {
-        //            fg[0] += pow(epsi[t], 2);
-        //            fg[0] += pow(cte[t], 2);
-        //        }
-        fg[0] += 1 / (vars[v_start] + 1);
 
         //
         // Setup Constraints
@@ -79,11 +76,14 @@ class FG_eval
         fg[1 + epsi_start] = vars[epsi_start];
 
         // The rest of the constraints
-        for (int i = 0; i < N - 1; i++)
+        for (int i = 0; i < MPC::N - 1; i++)
         {
             AD<double> x1 = vars[x_start + i + 1];
+            AD<double> y1 = vars[y_start + i + 1];
 
             AD<double> x0 = vars[x_start + i];
+            AD<double> y0 = vars[y_start + i];
+
             AD<double> psi0 = vars[psi_start + i];
             AD<double> v0 = vars[v_start + i];
 
@@ -95,7 +95,8 @@ class FG_eval
             // these to the solver.
 
             // TODO: Setup the rest of the model constraints
-            fg[2 + x_start + i] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+            fg[2 + x_start + i] = x1 - (x0 + v0 * CppAD::cos(psi0) * MPC::dt);
+            fg[2 + y_start + i] = y1 - (y0 + v0 * CppAD::sin(psi0) * MPC::dt);
         }
     }
 };
