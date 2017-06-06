@@ -12,8 +12,8 @@ class MPC
     MPC();
 
     static const auto kStateVectorSize = 6;
-    static const size_t N = 10;
-    static constexpr double dt = 1;
+    static const size_t N = 25;
+    static constexpr double dt = 0.05;
 
     // This value assumes the model presented in the classroom is used.
     //

@@ -118,27 +118,29 @@ int main()
                     double v = j[1]["speed"];
 
                     std::cout << "Polyfitting ..." << endl;
-                    Eigen::VectorXd coeffs = polyfit(all_x, all_y, 3);
+                    Eigen::VectorXd coeffs = polyfit(all_x, all_y, 1);
                     std::cout << "Coeffs are: \n" << coeffs << endl;
 
-                    auto f_of_x = polyeval(coeffs, px);
+                    //                    auto f_of_x = polyeval(coeffs, px);
 
-                    Eigen::VectorXd coeffs_prime(3);
-                    coeffs_prime[0] = 3 * coeffs[0];
-                    coeffs_prime[1] = 2 * coeffs[1];
-                    coeffs_prime[2] = 1 * coeffs[2];
+                    //                    Eigen::VectorXd coeffs_prime(3);
+                    //                    coeffs_prime[0] = 3 * coeffs[0];
+                    //                    coeffs_prime[1] = 2 * coeffs[1];
+                    //                    coeffs_prime[2] = 1 * coeffs[2];
 
-                    auto f_prime_of_x = polyeval(coeffs_prime, px);
-                    auto psi_dest = atan(f_prime_of_x);
+                    //                    auto f_prime_of_x = polyeval(coeffs_prime, px);
+                    //                    auto psi_dest = atan(f_prime_of_x);
 
-                    auto e_psi = psi - psi_dest;
+                    //                    auto e_psi = psi - psi_dest;
 
                     // TODO: calculate the cross track error
-                    double cte = f_of_x - py + (v * sin(e_psi) * MPC::dt);
+                    //                    double cte_own = f_of_x - py + (v * sin(e_psi) * MPC::dt);
+                    double cte = polyeval(coeffs, px) - py;
 
                     // TODO: calculate the orientation error
-                    auto delta = 0.0;
-                    double epsi = psi - psi_dest + (v / MPC::Lf * delta * MPC::dt);
+                    //                    auto delta = 0.0;
+                    //                    double epsi_own = psi - psi_dest + (v / MPC::Lf * delta * MPC::dt);
+                    double epsi = psi - atan(coeffs[1]);
 
                     Eigen::VectorXd state(MPC::kStateVectorSize);
                     state << px, py, psi, v, cte, epsi;
@@ -157,8 +159,16 @@ int main()
                     //                    next_state[4] = 0.0;
                     //                    next_state[5] = 0.0;
 
+                    std::cout << "s[0] = " << solution[0];
+                    std::cout << "s[1] = " << solution[1];
+                    std::cout << "s[2] = " << solution[2];
+                    std::cout << "s[3] = " << solution[3];
+                    std::cout << "s[4] = " << solution[4];
+                    std::cout << "s[5] = " << solution[5];
+                    std::cout << "s[6] = " << solution[6];
+
                     double steer_value = solution[6];
-                    double throttle_value = 0.1;  // solution[7];
+                    double throttle_value = solution[7];
 
                     json msgJson;
                     msgJson["steering_angle"] = steer_value;
