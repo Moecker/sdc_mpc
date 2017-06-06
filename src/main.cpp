@@ -109,8 +109,13 @@ int main()
                     vector<double> ptsx = j[1]["ptsx"];
                     vector<double> ptsy = j[1]["ptsy"];
 
-                    Eigen::Map<Eigen::VectorXd> all_x(&ptsx[0], ptsx.size());
-                    Eigen::Map<Eigen::VectorXd> all_y(&ptsy[0], ptsy.size());
+                    //                    Eigen::Map<Eigen::VectorXd> all_x(&ptsx[0], ptsx.size());
+                    //                    Eigen::Map<Eigen::VectorXd> all_y(&ptsy[0], ptsy.size());
+
+                    Eigen::VectorXd all_x(6);
+                    all_x << ptsx[0], ptsx[1], ptsx[2], ptsx[3], ptsx[4], ptsx[5];
+                    Eigen::VectorXd all_y(6);
+                    all_y << ptsy[0], ptsy[1], ptsy[2], ptsy[3], ptsy[4], ptsy[5];
 
                     double px = j[1]["x"];
                     double py = j[1]["y"];
@@ -159,13 +164,14 @@ int main()
                     //                    next_state[4] = 0.0;
                     //                    next_state[5] = 0.0;
 
-                    std::cout << "s[0] = " << solution[0];
-                    std::cout << "s[1] = " << solution[1];
-                    std::cout << "s[2] = " << solution[2];
-                    std::cout << "s[3] = " << solution[3];
-                    std::cout << "s[4] = " << solution[4];
-                    std::cout << "s[5] = " << solution[5];
-                    std::cout << "s[6] = " << solution[6];
+                    std::cout << "s[0] = " << solution[0] << std::endl;
+                    std::cout << "s[1] = " << solution[1] << std::endl;
+                    std::cout << "s[2] = " << solution[2] << std::endl;
+                    std::cout << "s[3] = " << solution[3] << std::endl;
+                    std::cout << "s[4] = " << solution[4] << std::endl;
+                    std::cout << "s[5] = " << solution[5] << std::endl;
+                    std::cout << "s[6] = " << solution[6] << std::endl;
+                    std::cout << "s[7] = " << solution[7] << std::endl;
 
                     double steer_value = solution[6];
                     double throttle_value = solution[7];
@@ -178,6 +184,8 @@ int main()
                     std::cout << "Throttle: " << throttle_value << endl;
 
                     // Display the MPC predicted trajectory
+                    for_each(ptsx.begin(), ptsx.end(), [px](double& p) { p = p - px; });
+                    for_each(ptsy.begin(), ptsy.end(), [py](double& p) { p = p - py; });
                     vector<double> mpc_x_vals = ptsx;
                     vector<double> mpc_y_vals = ptsy;
 
@@ -188,6 +196,13 @@ int main()
                     msgJson["mpc_y"] = mpc_y_vals;
 
                     // Display the waypoints/reference line
+
+                    std::cout << "ptsx[0] = " << ptsx[0] << std::endl;
+                    std::cout << "ptsx[1] = " << ptsx[1] << std::endl;
+
+                    std::cout << "ptsy[0] = " << ptsy[0] << std::endl;
+                    std::cout << "ptsy[1] = " << ptsy[1] << std::endl;
+
                     vector<double> next_x_vals = ptsx;
                     vector<double> next_y_vals = ptsy;
 
