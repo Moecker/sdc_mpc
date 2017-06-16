@@ -25,22 +25,34 @@ MPC::~MPC()
 
 void MPC::InitWithPreviousSolution(Dvector& vars)
 {
-    for (int i = 0; i < (N - 1) - 1; i++)
+    auto last_index = (N - 1) - 1;
+
+    // For steering
+    for (int i = 0; i < last_index; i++)
     {
         vars[kStateSize + i] = historic_steering[i + 1];
     }
-    vars[kStateSize + (N - 1) - 1] = 0;
+    vars[kStateSize + last_index] = 0;
 
-    for (int i = 0; i < (N - 1) - 1; i++)
+    // For throttle
+    for (int i = 0; i < last_index; i++)
     {
         vars[kStateSize + i + N - 1] = historic_throttle[i + 1];
     }
-    vars[kStateSize + kActuatorSize * (N - 1) - 1] = 0;
+    vars[kStateSize + kActuatorSize * last_index] = 0;
 }
 
 void MPC::InitUpperAndLowerBoundsVars(Eigen::VectorXd state, Dvector& vars_upperbound, Dvector& vars_lowerbound)
 {
-    // First the current state
+    // Set all non-actuators upper and lowerlimits
+    // to the max negative and positive values.
+    for (int i = 0; i < kStateSize + (N - 1) * kActuatorSize; i++)
+    {
+        vars_lowerbound[i] = -1.0e19;
+        vars_upperbound[i] = 1.0e19;
+    }
+
+    // Fix the current state
     for (int i = 0; i < kStateSize; i++)
     {
         vars_lowerbound[i] = state(i);
@@ -56,10 +68,11 @@ void MPC::InitUpperAndLowerBoundsVars(Eigen::VectorXd state, Dvector& vars_upper
         vars_upperbound[i] = Deg2Rad(kMaxSteeringDelta);
     }
 
+    // Acceleration/decceleration upper and lower limits.
     for (int i = N - 1 + kStateSize; i < kActuatorSize * (N - 1) + kStateSize; i++)
     {
-        vars_lowerbound[i] = 0;
-        vars_upperbound[i] = 2;
+        vars_lowerbound[i] = -1.0;
+        vars_upperbound[i] = 1.0;
     }
 }
 
@@ -117,9 +130,10 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     // Init constraints lower and upper bounds
     InitUpperAndLowerBoundsConstraints(n_constraints, constraints_lowerbound, constraints_upperbound);
 
-    // Object that computes objective and constraints
-    int vref, alpha, beta, lambda, nu;
-    FgEvaluator fg_eval(coeffs, vref = 20, alpha = 4, beta = 2, lambda = 90, nu = 2);
+    // Instatiate fg eval instance that computes objective and constraints with given weights for each cost part.
+    int vref, position_weight, speed_weight, steering_weight, throttle_weight;
+    FgEvaluator fg_eval(
+        coeffs, vref = 26, position_weight = 12, speed_weight = 5, steering_weight = 110, throttle_weight = 4);
 
     // NOTE: You don't have to worry about these options
     // options for IPOPT solver

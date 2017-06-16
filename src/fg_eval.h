@@ -11,8 +11,17 @@ class FgEvaluator
   public:
     typedef CPPAD_TESTVECTOR(CppAD::AD<double>) ADvector;
 
-    FgEvaluator(Eigen::VectorXd coeffs, double v, double a, double b, double l, double n)
-            : v_reference_(v), alpha_(a), beta_(b), lambda_(l), nu_(n)
+    FgEvaluator(Eigen::VectorXd coeffs,
+                double v_reference,
+                double w_position,
+                double w_speed,
+                double w_steering,
+                double w_trottle)
+            : v_reference_(v_reference),
+              position_weight_(w_position),
+              speed_weight_(w_speed),
+              steering_weight_(w_steering),
+              throttle_weight_(w_trottle)
     {
         this->coeffs = coeffs;
     }
@@ -24,10 +33,12 @@ class FgEvaluator
 
   private:
     double v_reference_;
-    double alpha_;
-    double beta_;
-    double lambda_;
-    double nu_;
+
+    // Certain weights to vary impacts of certain cost contributions
+    double position_weight_;
+    double speed_weight_;
+    double steering_weight_;
+    double throttle_weight_;
 };
 
 #endif /* FG_EVAL_H */

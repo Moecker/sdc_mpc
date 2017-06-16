@@ -27,10 +27,10 @@ void FgEvaluator::operator()(ADvector& fg, const ADvector& vars)
 
         SimulateTimestep(px, py, phi, ve, steering, throttle, MPC::dt, MPC::Lf);
 
-        const auto postion_cost = alpha_ * CppAD::pow(Polyeval(coeffs, px) - py, 2);
-        const auto velocity_cost = beta_ * CppAD::pow(ve - v_reference_, 2);
-        const auto lambda_solution = lambda_ * CppAD::pow(steering, 2);
-        const auto trottle_cost = nu_ * CppAD::pow(throttle, 2);
+        const auto postion_cost = position_weight_ * CppAD::pow(Polyeval(coeffs, px) - py, 2);
+        const auto velocity_cost = speed_weight_ * CppAD::pow(ve - v_reference_, 2);
+        const auto lambda_solution = steering_weight_ * CppAD::pow(steering, 2);
+        const auto trottle_cost = throttle_weight_ * CppAD::pow(throttle, 2);
 
         fg[0] += postion_cost + velocity_cost + lambda_solution + trottle_cost;
         fg[i + 1] = phi;  // Total angle
