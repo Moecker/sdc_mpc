@@ -11,7 +11,7 @@ MPC::MPC()
     historic_steering.resize(N - 1);
     historic_throttle.resize(N - 1);
 
-    // Clear all historic steering and trhottle
+    // Clear all historic steering and throttle values
     for (int i = 0; i < N - 1; i++)
     {
         historic_steering[i] = 0;

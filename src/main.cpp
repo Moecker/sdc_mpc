@@ -82,8 +82,7 @@ int main()
     });
 
     // We don't need this since we're not using HTTP but if it's removed the
-    // program
-    // doesn't compile :-(
+    // program doesn't compile :-(
     h.onHttpRequest([](uWS::HttpResponse* res, uWS::HttpRequest req, char* data, size_t, size_t) {
         const std::string s = "<h1>Hello world!</h1>";
         if (req.getUrl().valueLength == 1)
@@ -125,9 +124,9 @@ json Loop(vector<double> ptsx, vector<double> ptsy, double px, double py, double
     vector<double> next_y_vals;
 
     // Transformation of received points from map coordinate system into local coordinate system. Rational is to only
-    // work in local (vehicle) coordinate system to ease ll computations.
-    CoordinateSystems ct(px, py, psi);
-    ct.Transform(ptsx, ptsy, next_x_vals, next_y_vals);
+    // work in local (vehicle) coordinate system to ease all computations.
+    CoordinateSystems coordinate_system(px, py, psi);
+    coordinate_system.Transform(ptsx, ptsy, next_x_vals, next_y_vals);
 
     // Fit the future reference points, using a polynomial as suggested in the class.
     // Requires std::vector -> Eigen transform
@@ -169,8 +168,7 @@ json Loop(vector<double> ptsx, vector<double> ptsy, double px, double py, double
     vector<double> mpc_y_vals;
 
     //.. add (x,y) points to list here, points are in reference to the
-    // vehicle's coordinate system
-    // the points in the simulator are connected by a Green line
+    // vehicle's coordinate system the points in the simulator are connected by a Green line
     mpc_x_vals.push_back(vehicle_px);
     mpc_y_vals.push_back(vehicle_py);
 
