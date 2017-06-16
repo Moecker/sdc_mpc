@@ -9,9 +9,17 @@ add_definitions(-DHAVE_CSTDDEF)
 
 set(CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS, "${CXX_FLAGS}")
-set(CMAKE_BUILD_TYPE "Debug")
+# set(CMAKE_BUILD_TYPE "Debug")
 
-set(sources src/MPC.cpp src/main.cpp)
+set(sources
+    src/mpc.cpp
+    src/main.cpp
+    src/coordinate_systems.cpp
+    src/coordinate_systems.h
+    src/auxiliary.h
+    src/auxiliary.cpp
+    src/fg_eval.h
+    src/fg_eval.cpp)
 
 include_directories(/usr/local/include)
 link_directories(/usr/local/lib)
@@ -28,4 +36,3 @@ endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 add_executable(mpc ${sources})
 
 target_link_libraries(mpc ipopt z ssl uv uWS)
-

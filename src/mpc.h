@@ -1,19 +1,26 @@
 #ifndef MPC_H
 #define MPC_H
 
+#include <cppad/cppad.hpp>
 #include <vector>
+
 #include "Eigen-3.3/Eigen/Core"
+
+extern const double Lf;
+extern const double dt;
 
 using namespace std;
 
 class MPC
 {
   public:
-    MPC();
+    typedef CPPAD_TESTVECTOR(double) Dvector;
 
-    static const auto kStateVectorSize = 6;
-    static const size_t N = 25;
-    static constexpr double dt = 0.05;
+    static constexpr size_t N = 8;
+    static constexpr double dt = 0.5;
+
+    static constexpr int kStateSize = 4;
+    static constexpr int kActuatorSize = 2;
 
     // This value assumes the model presented in the classroom is used.
     //
@@ -27,11 +34,22 @@ class MPC
     // This is the length from front to CoG that has a similar radius.
     static constexpr double Lf = 2.67;
 
+    MPC();
     virtual ~MPC();
 
     // Solve the model given an initial state and polynomial coefficients.
     // Return the first actuatotions.
     vector<double> Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs);
+
+    void InitWithPreviousSolution(Dvector& vars);
+    void InitUpperAndLowerBoundsVars(Eigen::VectorXd state, Dvector& vars_upperbound, Dvector& vars_lowerbound);
+    void InitUpperAndLowerBoundsConstraints(size_t n_constraints,
+                                            Dvector& constraints_lowerbound,
+                                            Dvector& constraints_upperbound);
+
+  private:
+    vector<double> historic_steering;
+    vector<double> historic_throttle;
 };
 
 #endif /* MPC_H */
