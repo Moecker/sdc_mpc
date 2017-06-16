@@ -133,7 +133,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     // Instatiate fg eval instance that computes objective and constraints with given weights for each cost part.
     int vref, position_weight, speed_weight, steering_weight, throttle_weight;
     FgEvaluator fg_eval(
-        coeffs, vref = 26, position_weight = 12, speed_weight = 5, steering_weight = 110, throttle_weight = 4);
+        coeffs, vref = 24, position_weight = 12, speed_weight = 10, steering_weight = 250, throttle_weight = 4);
 
     // NOTE: You don't have to worry about these options
     // options for IPOPT solver

@@ -129,14 +129,14 @@ json Loop(vector<double> ptsx, vector<double> ptsy, double px, double py, double
     CoordinateSystems ct(px, py, psi);
     ct.Transform(ptsx, ptsy, next_x_vals, next_y_vals);
 
-    // Fit the future reference points, using fourth order polynomial as suggested in the class.
+    // Fit the future reference points, using a polynomial as suggested in the class.
     // Requires std::vector -> Eigen transform
     Eigen::VectorXd reference_x = Eigen::Map<Eigen::VectorXd>(next_x_vals.data(), next_x_vals.size());
     Eigen::VectorXd reference_y = Eigen::Map<Eigen::VectorXd>(next_y_vals.data(), next_y_vals.size());
 
-    // Fit received points as a 4th order polynomial
+    // Fit received points as a 3rd order polynomial
     Eigen::VectorXd coeffs;
-    coeffs = Polyfit(reference_x, reference_y, 4);
+    coeffs = Polyfit(reference_x, reference_y, 3);
 
     // All posittion and heading related variables are zero as the vehicle coordinate system has its
     // origin here.
