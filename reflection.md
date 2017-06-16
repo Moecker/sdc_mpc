@@ -26,7 +26,7 @@ The code has been restructured a bit, so that there is now basically four parts:
 
 ## Implementation
 
-###The Model
+### The Model
 
 Student describes their model in detail. This includes the state, actuators and update equations.
 
