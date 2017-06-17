@@ -18,11 +18,19 @@ Given that we've made CMakeLists.txt as general as possible, it's recommend that
 * Tested using Ubuntu 16.04 and Term 2 Udacity Simulator and the installation script.
 
 The code has been restructured a bit, so that there is now basically four parts:
+
 * The `Main` file which contains all the simulator code and triggers the solve method of the MPC
 * The `MPC` itself with definition of all contraints
 * The `FgEvaluator` for the cost computation of a prediction
 * The `CoordinateSystems` class used for coordinate transformations as discussed later
 * The `Auxiliary` file containing helpers for all modules
+
+The code and approach was influenced by two contributions:
+
+* The MPC quizzes found under `https://github.com/udacity/CarND-MPC-Quizzes`. In particular the constraints and fg_evaluator implementation was influenced from here.
+* This blog entry `https://medium.com/@NickHortovanyi/carnd-controls-mpc-2f456ce658f`. In particular, the idea to first coordinate transform the waypoints and to keep track of historic controls
+* These GitHub repos: `https://github.com/hortovanyi/CarND-MPC-Project` and `https://github.com/ajsmilutin/CarND-MPC-Project`. In particular the coordinate transformation was influences from here.
+
 
 ## Implementation
 
@@ -69,10 +77,10 @@ If the student preprocesses waypoints, the vehicle state, and/or actuators prior
 
 The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
 
-* The latency did not directly influced my approach or choosen parameters.
-* The prediction was good enough to have a reasonable long foresight so that the latency did not kick in too much.
+* To account for the 100ms delay, a countermeasure must be installed in the MPC procedure. The choice taken in this project is to estimate the vehicle's position 100ms to the front, as if the car has actually already moved there. The result is a trajectory which is closer to the desired one.
+* More remarks: The latency did not directly influced my approach or choosen parameters. The prediction was good enough to have a reasonable long foresight so that the latency did not kick in too much.
 * Also my choice of max speed constraint (around 50 km/h) was set that low that the effect of latency was low.
-* One addition to what was tough has been added: The solution uses a weighted average of previous control outputs (it is called historic steering and throttle value) with current predicted ones. This increased smootheness and robustness for partial bad model predictions.
+* One addition to this, one feature has been added: The solution uses a weighted average of previous control outputs (it is called historic steering and throttle value) with current predicted ones. This increased smootheness and robustness for partial bad model predictions.
 
 ## Simulation
 

@@ -143,6 +143,9 @@ json Loop(vector<double> ptsx, vector<double> ptsy, double px, double py, double
     double vehicle_py = 0;
     double vehicle_phi = 0;
 
+    // Move forward the projected distance in x-direction to cover 100 ms of latency
+    vehicle_px += v * -100 / (3600);
+
     const auto kVelFactorToMS = 0.44704;
     double vehicle_v = v * kVelFactorToMS;
 

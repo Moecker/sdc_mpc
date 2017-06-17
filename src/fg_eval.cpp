@@ -18,21 +18,25 @@ void FgEvaluator::operator()(ADvector& fg, const ADvector& vars)
     AD<double> px = vars[0];
     AD<double> py = vars[1];
     AD<double> phi = vars[2];
-    AD<double> ve = vars[3];
+    AD<double> speed = vars[3];
 
     for (int i = 0; i < MPC::N - 1; i++)
     {
         AD<double> steering = vars[MPC::kStateSize + i];
         AD<double> throttle = vars[MPC::kStateSize + (MPC::N - 1) + i];
 
-        SimulateTimestep(px, py, phi, ve, steering, throttle, MPC::dt, MPC::Lf);
+        // Here we call the simulation step to produce the next state varables for each ith step.
+        SimulateTimestep(px, py, phi, speed, steering, throttle, MPC::dt, MPC::Lf);
 
         const auto postion_cost = position_weight_ * CppAD::pow(Polyeval(coeffs, px) - py, 2);
-        const auto velocity_cost = speed_weight_ * CppAD::pow(ve - v_reference_, 2);
-        const auto lambda_solution = steering_weight_ * CppAD::pow(steering, 2);
+        const auto velocity_cost = speed_weight_ * CppAD::pow(speed - v_reference_, 2);
+        const auto steering_cost = steering_weight_ * CppAD::pow(steering, 2);
         const auto trottle_cost = throttle_weight_ * CppAD::pow(throttle, 2);
 
-        fg[0] += postion_cost + velocity_cost + lambda_solution + trottle_cost;
-        fg[i + 1] = phi;  // Total angle
+        // Consideration of the cost
+        fg[0] += postion_cost + velocity_cost + steering_cost + trottle_cost;
+
+        // Consideration of the angle
+        fg[i + 1] = phi;
     }
 }

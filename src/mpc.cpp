@@ -23,25 +23,6 @@ MPC::~MPC()
 {
 }
 
-void MPC::InitWithPreviousSolution(Dvector& vars)
-{
-    auto last_index = (N - 1) - 1;
-
-    // For steering
-    for (int i = 0; i < last_index; i++)
-    {
-        vars[kStateSize + i] = historic_steering[i + 1];
-    }
-    vars[kStateSize + last_index] = 0;
-
-    // For throttle
-    for (int i = 0; i < last_index; i++)
-    {
-        vars[kStateSize + i + N - 1] = historic_throttle[i + 1];
-    }
-    vars[kStateSize + kActuatorSize * last_index] = 0;
-}
-
 void MPC::InitUpperAndLowerBoundsVars(Eigen::VectorXd state, Dvector& vars_upperbound, Dvector& vars_lowerbound)
 {
     // Set all non-actuators upper and lowerlimits
@@ -61,7 +42,7 @@ void MPC::InitUpperAndLowerBoundsVars(Eigen::VectorXd state, Dvector& vars_upper
 
     // The upper and lower limits of delta are set to -25 and 25
     // degrees (values in radians).
-    const auto kMaxSteeringDelta = 15.0;
+    const auto kMaxSteeringDelta = 12.5;
     for (int i = kStateSize; i < N - 1 + kStateSize; i++)
     {
         vars_lowerbound[i] = -Deg2Rad(kMaxSteeringDelta);
@@ -71,15 +52,35 @@ void MPC::InitUpperAndLowerBoundsVars(Eigen::VectorXd state, Dvector& vars_upper
     // Acceleration/decceleration upper and lower limits.
     for (int i = N - 1 + kStateSize; i < kActuatorSize * (N - 1) + kStateSize; i++)
     {
-        vars_lowerbound[i] = -1.0;
-        vars_upperbound[i] = 1.0;
+        vars_lowerbound[i] = -0.2;
+        vars_upperbound[i] = 0.6;
     }
+}
+
+void MPC::InitWithPreviousSolution(Dvector& vars)
+{
+    auto last_index = (N - 1) - 1;
+
+    // For steering
+    for (int i = 0; i < last_index; i++)
+    {
+        vars[kStateSize + i] = historic_steering[i + 1];
+    }
+    vars[kStateSize + last_index] = 0;
+
+    // For throttle
+    for (int i = 0; i < last_index; i++)
+    {
+        vars[kStateSize + i + N - 1] = historic_throttle[i + 1];
+    }
+    vars[kStateSize + kActuatorSize * last_index] = 0;
 }
 
 void MPC::InitUpperAndLowerBoundsConstraints(size_t n_constraints,
                                              Dvector& constraints_lowerbound,
                                              Dvector& constraints_upperbound)
 {
+    // Since we choos to coordinate transform
     for (int i = 0; i < n_constraints; i++)
     {
         constraints_lowerbound[i] = -5 * Pi() / 8;
@@ -131,9 +132,13 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     InitUpperAndLowerBoundsConstraints(n_constraints, constraints_lowerbound, constraints_upperbound);
 
     // Instatiate fg eval instance that computes objective and constraints with given weights for each cost part.
-    int vref, position_weight, speed_weight, steering_weight, throttle_weight;
-    FgEvaluator fg_eval(
-        coeffs, vref = 24, position_weight = 12, speed_weight = 10, steering_weight = 250, throttle_weight = 4);
+    int reference_speed = 24;
+    int position_weight = 50;
+    int speed_weight = 10;
+    int steering_weight = 700;
+    int throttle_weight = 4;
+
+    FgEvaluator fg_evaluator(coeffs, reference_speed, position_weight, speed_weight, steering_weight, throttle_weight);
 
     // NOTE: You don't have to worry about these options
     // options for IPOPT solver
@@ -164,7 +169,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
                                               vars_upperbound,
                                               constraints_lowerbound,
                                               constraints_upperbound,
-                                              fg_eval,
+                                              fg_evaluator,
                                               solution);
 
     // Check some of the solution values
@@ -174,21 +179,21 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
     auto cost = solution.obj_value;
     std::cout << "Cost is evaluated to: " << cost << std::endl;
 
-    // TODO: Return the first actuator values. The variables can be accessed with
+    // Return the first actuator values. The variables can be accessed with
     // `solution.x[i]`.
     //
     // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
     // creates a 2 element double vector.
 
     // There are cases when the solution imediately jumps to some suboptimal
-    // value which is identified by a high cost. In that case, the
-    // solution calculated in previous timestamps is incporporated by a "hisotric consideration" factor which aims at
-    // smoothing the actual control value.
+    // value which is identified by a high cost. In that case, the solution calculated in previous timestamps is
+    // incporporated by a "hisotric consideration" factor which aims at smoothing the actual control value.
     vector<double> control;
 
     double historic_value_factor = 0.25;
     double actual_value_factor = (1 - historic_value_factor);
 
+    // Here, the new historic values are computed absed on a weighted average
     auto last_index = N - 1 - 1;
     for (int i = 0; i < last_index; i++)
     {
@@ -202,6 +207,7 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs)
         control.push_back(historic_throttle[i]);
     }
 
+    // Finally the current solution is added to the vectors and the actual control vector
     historic_steering[last_index] = solution.x[kStateSize + last_index];
     historic_throttle[last_index] = solution.x[kStateSize + kActuatorSize * (N - 1) - 1];
 
