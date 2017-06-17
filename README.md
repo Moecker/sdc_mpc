@@ -2,6 +2,8 @@
 
 This file contains the Rubric's questions and answers to those where requested.
 
+![Result](/results/result.png)
+
 ---
 
 # Rubrics
