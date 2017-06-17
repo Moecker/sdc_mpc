@@ -20,7 +20,7 @@ Given that we've made CMakeLists.txt as general as possible, it's recommend that
 The code has been restructured a bit, so that there is now basically four parts:
 
 * The `Main` file which contains all the simulator code and triggers the solve method of the MPC
-* The `MPC` itself with definition of all contraints
+* The `MPC` itself with definition of all constraints
 * The `FgEvaluator` for the cost computation of a prediction
 * The `CoordinateSystems` class used for coordinate transformations as discussed later
 * The `Auxiliary` file containing helpers for all modules
@@ -55,13 +55,13 @@ Student discusses the reasoning behind the chosen N (timestep length) and dt (el
 
 * In general there is a trade-off between an exact solution (or best prediction) and required runtime.
 * The variable `N` (timestep length) influences the foresight of the model prediction. An increased value results in a longer distance where a prediction can be made.
-* The variable `dt` (elapsed duration between timesteps) influences the exactness and smoothness of the prediction. An increased value results in smaller gaps between predicted trajectory points and hence increaseses the prediction quality.
+* The variable `dt` (elapsed duration between timesteps) influences the exactness and smoothness of the prediction. An increased value results in smaller gaps between predicted trajectory points and hence increases the prediction quality.
 * An ideal solution would set both variables to quite high values. Real time requirements, however, restrict this. 
 * The final choice was: `N = 8` and `dt = 0.5`
 * During lectures the first choice was N = 10 and dt = 0.5. Those do not really deviate from the initial suggestion.
-* Interesingly, another effect could be overserved during parameter tunning: A too high value of N (starting at around 12) made the MPC prediction worse as it tried to fit the polynomíal for too distant points. 
-* As expected, the dt value influenced the smootheness of the prediction.
-* With choosen values the systems runs quite smoothly and very fast.
+* Interestingly, another effect could be observed during parameter tuning: A too high value of N (starting at around 12) made the MPC prediction worse as it tried to fit the polynomial for too distant points. 
+* As expected, the dt value influenced the smoothness of the prediction.
+* With chosen values the systems runs quite smoothly and very fast.
 
 ### Polynomial Fitting and MPC Preprocessing
 
@@ -70,7 +70,7 @@ A polynomial is fitted to waypoints.
 If the student preprocesses waypoints, the vehicle state, and/or actuators prior to the MPC procedure it is described.
 
 * The approach taken does a full coordinate transformation of waypoint prior to the actual MPC procedure. 
-* My first approaches were struggling with different coordinate systems (basically map vs. vehicle) THis is why the decision was made to compute everything in the vehicle coordinate system (or so called local system).
+* My first approaches were struggling with different coordinate systems (basically map vs.. vehicle) THis is why the decision was made to compute everything in the vehicle coordinate system (or so called local system).
 * The received ptxs and ptys in map coordinate system from the json message is transformed into local coordinate system. This approach also influenced the state of the vehicle, so that px, py and phi was by definition set to zero.
 
 ### Model Predictive Control with Latency
@@ -78,9 +78,9 @@ If the student preprocesses waypoints, the vehicle state, and/or actuators prior
 The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
 
 * To account for the 100ms delay, a countermeasure must be installed in the MPC procedure. The choice taken in this project is to estimate the vehicle's position 100ms to the front, as if the car has actually already moved there. The result is a trajectory which is closer to the desired one.
-* More remarks: The latency did not directly influced my approach or choosen parameters. The prediction was good enough to have a reasonable long foresight so that the latency did not kick in too much.
+* More remarks: The latency did not directly influenced my approach or chosen parameters. The prediction was good enough to have a reasonable long foresight so that the latency did not kick in too much.
 * Also my choice of max speed constraint (around 50 km/h) was set that low that the effect of latency was low.
-* One addition to this, one feature has been added: The solution uses a weighted average of previous control outputs (it is called historic steering and throttle value) with current predicted ones. This increased smootheness and robustness for partial bad model predictions.
+* One addition to this, one feature has been added: The solution uses a weighted average of previous control outputs (it is called historic steering and throttle value) with current predicted ones. This increased smoothness and robustness for partial bad model predictions.
 
 ## Simulation
 

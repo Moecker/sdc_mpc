@@ -1,109 +1,92 @@
-# CarND-Controls-MPC
-Self-Driving Car Engineer Nanodegree Program
+# Reflection Intro
+
+This file contains the Rubric's questions and answers to those where requested.
 
 ---
 
-## Dependencies
+# Rubrics
 
-* cmake >= 3.5
- * All OSes: [click here for installation instructions](https://cmake.org/install/)
-* make >= 4.1
-  * Linux: make is installed by default on most Linux distros
-  * Mac: [install Xcode command line tools to get make](https://developer.apple.com/xcode/features/)
-  * Windows: [Click here for installation instructions](http://gnuwin32.sourceforge.net/packages/make.htm)
-* gcc/g++ >= 5.4
-  * Linux: gcc / g++ is installed by default on most Linux distros
-  * Mac: same deal as make - [install Xcode command line tools]((https://developer.apple.com/xcode/features/)
-  * Windows: recommend using [MinGW](http://www.mingw.org/)
-* [uWebSockets](https://github.com/uWebSockets/uWebSockets) == 0.14, but the master branch will probably work just fine
-  * Follow the instructions in the [uWebSockets README](https://github.com/uWebSockets/uWebSockets/blob/master/README.md) to get setup for your platform. You can download the zip of the appropriate version from the [releases page](https://github.com/uWebSockets/uWebSockets/releases). Here's a link to the [v0.14 zip](https://github.com/uWebSockets/uWebSockets/archive/v0.14.0.zip).
-  * If you have MacOS and have [Homebrew](https://brew.sh/) installed you can just run the ./install-mac.sh script to install this.
-* Fortran Compiler
-  * Mac: `brew install gcc` (might not be required)
-  * Linux: `sudo apt-get install gfortran`. Additionall you have also have to install gcc and g++, `sudo apt-get install gcc g++`. Look in [this Dockerfile](https://github.com/udacity/CarND-MPC-Quizzes/blob/master/Dockerfile) for more info.
-* [Ipopt](https://projects.coin-or.org/Ipopt)
-  * Mac: `brew install ipopt`
-  * Linux
-    * You will need a version of Ipopt 3.12.1 or higher. The version available through `apt-get` is 3.11.x. If you can get that version to work great but if not there's a script `install_ipopt.sh` that will install Ipopt. You just need to download the source from the Ipopt [releases page](https://www.coin-or.org/download/source/Ipopt/) or the [Github releases](https://github.com/coin-or/Ipopt/releases) page.
-    * Then call `install_ipopt.sh` with the source directory as the first argument, ex: `bash install_ipopt.sh Ipopt-3.12.1`. 
-  * Windows: TODO. If you can use the Linux subsystem and follow the Linux instructions.
-* [CppAD](https://www.coin-or.org/CppAD/)
-  * Mac: `brew install cppad`
-  * Linux `sudo apt-get install cppad` or equivalent.
-  * Windows: TODO. If you can use the Linux subsystem and follow the Linux instructions.
-* [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page). This is already part of the repo so you shouldn't have to worry about it.
-* Simulator. You can download these from the [releases tab](https://github.com/udacity/CarND-MPC-Project/releases).
-* Not a dependency but read the [DATA.md](./DATA.md) for a description of the data sent back from the simulator.
+## Compilation
+
+### Your code should compile.
+
+Code must compile without errors with cmake and make.
+
+Given that we've made CMakeLists.txt as general as possible, it's recommend that you do not change it unless you can guarantee that your changes will still compile on any platform.
+
+* Code does compile using cmake && make.
+* Tested using Ubuntu 16.04 and Term 2 Udacity Simulator and the installation script.
+
+The code has been restructured a bit, so that there is now basically four parts:
+
+* The `Main` file which contains all the simulator code and triggers the solve method of the MPC
+* The `MPC` itself with definition of all contraints
+* The `FgEvaluator` for the cost computation of a prediction
+* The `CoordinateSystems` class used for coordinate transformations as discussed later
+* The `Auxiliary` file containing helpers for all modules
+
+The code and approach was influenced by two contributions:
+
+* The MPC quizzes found under `https://github.com/udacity/CarND-MPC-Quizzes`. In particular the constraints and fg_evaluator implementation was influenced from here.
+* This blog entry `https://medium.com/@NickHortovanyi/carnd-controls-mpc-2f456ce658f`. In particular, the idea to first coordinate transform the waypoints and to keep track of historic controls
+* These GitHub repos: `https://github.com/hortovanyi/CarND-MPC-Project` and `https://github.com/ajsmilutin/CarND-MPC-Project`. In particular the coordinate transformation was influences from here.
 
 
-## Basic Build Instructions
+## Implementation
 
+### The Model
 
-1. Clone this repo.
-2. Make a build directory: `mkdir build && cd build`
-3. Compile: `cmake .. && make`
-4. Run it: `./mpc`.
+Student describes their model in detail. This includes the state, actuators and update equations.
 
-## Tips
+* The state contains of four variables: The position `x`, the position `y`, the heading (or orientation) `phi` and the velocity `v`. This choice of values comes close to real car dynamics, though more advanced considerations as a drift-angle or wind-resistance (such as a cw value) are not taken into account.
+* The coordinate system of the vehicle is defined as such: The x-axis point to the front, the y-axis point to the left by taking the rear axis' center as the system's origin.
+* The model uses two actuators: Steering and throttle. Also this comes close to what can be observed in a real car - in fact those are the only two options how a real driver controls the car.
 
-1. It's recommended to test the MPC on basic examples to see if your implementation behaves as desired. One possible example
-is the vehicle starting offset of a straight line (reference). If the MPC implementation is correct, after some number of timesteps
-(not too many) it should find and track the reference line.
-2. The `lake_track_waypoints.csv` file has the waypoints of the lake track. You could use this to fit polynomials and points and see of how well your model tracks curve. NOTE: This file might be not completely in sync with the simulator so your solution should NOT depend on it.
-3. For visualization this C++ [matplotlib wrapper](https://github.com/lava/matplotlib-cpp) could be helpful.
+The update equations can be found in the `auxiliary.h` file; they are defined as:
 
-## Editor Settings
+* `px += velocity * cos(phi) * dt;`
+* `py += velocity * sin(phi) * dt;`
+* `phi += velocity / Lf * steering * dt;`
+* `velocity += throttle * dt;`
 
-We've purposefully kept editor configuration files out of this repo in order to
-keep it as simple and environment agnostic as possible. However, we recommend
-using the following settings:
+### Timestep Length and Elapsed Duration (N & dt)
 
-* indent using spaces
-* set tab width to 2 spaces (keeps the matrices in source code aligned)
+Student discusses the reasoning behind the chosen N (timestep length) and dt (elapsed duration between timesteps) values. Additionally the student details the previous values tried.
 
-## Code Style
+* In general there is a trade-off between an exact solution (or best prediction) and required runtime.
+* The variable `N` (timestep length) influences the foresight of the model prediction. An increased value results in a longer distance where a prediction can be made.
+* The variable `dt` (elapsed duration between timesteps) influences the exactness and smoothness of the prediction. An increased value results in smaller gaps between predicted trajectory points and hence increaseses the prediction quality.
+* An ideal solution would set both variables to quite high values. Real time requirements, however, restrict this. 
+* The final choice was: `N = 8` and `dt = 0.5`
+* During lectures the first choice was N = 10 and dt = 0.5. Those do not really deviate from the initial suggestion.
+* Interesingly, another effect could be overserved during parameter tunning: A too high value of N (starting at around 12) made the MPC prediction worse as it tried to fit the polynomíal for too distant points. 
+* As expected, the dt value influenced the smootheness of the prediction.
+* With choosen values the systems runs quite smoothly and very fast.
 
-Please (do your best to) stick to [Google's C++ style guide](https://google.github.io/styleguide/cppguide.html).
+### Polynomial Fitting and MPC Preprocessing
 
-## Project Instructions and Rubric
+A polynomial is fitted to waypoints.
 
-Note: regardless of the changes you make, your project must be buildable using
-cmake and make!
+If the student preprocesses waypoints, the vehicle state, and/or actuators prior to the MPC procedure it is described.
 
-More information is only accessible by people who are already enrolled in Term 2
-of CarND. If you are enrolled, see [the project page](https://classroom.udacity.com/nanodegrees/nd013/parts/40f38239-66b6-46ec-ae68-03afd8a601c8/modules/f1820894-8322-4bb3-81aa-b26b3c6dcbaf/lessons/b1ff3be0-c904-438e-aad3-2b5379f0e0c3/concepts/1a2255a0-e23c-44cf-8d41-39b8a3c8264a)
-for instructions and the project rubric.
+* The approach taken does a full coordinate transformation of waypoint prior to the actual MPC procedure. 
+* My first approaches were struggling with different coordinate systems (basically map vs. vehicle) THis is why the decision was made to compute everything in the vehicle coordinate system (or so called local system).
+* The received ptxs and ptys in map coordinate system from the json message is transformed into local coordinate system. This approach also influenced the state of the vehicle, so that px, py and phi was by definition set to zero.
 
-## Hints!
+### Model Predictive Control with Latency
 
-* You don't have to follow this directory structure, but if you do, your work
-  will span all of the .cpp files here. Keep an eye out for TODOs.
+The student implements Model Predictive Control that handles a 100 millisecond latency. Student provides details on how they deal with latency.
 
-## Call for IDE Profiles Pull Requests
+* To account for the 100ms delay, a countermeasure must be installed in the MPC procedure. The choice taken in this project is to estimate the vehicle's position 100ms to the front, as if the car has actually already moved there. The result is a trajectory which is closer to the desired one.
+* More remarks: The latency did not directly influced my approach or choosen parameters. The prediction was good enough to have a reasonable long foresight so that the latency did not kick in too much.
+* Also my choice of max speed constraint (around 50 km/h) was set that low that the effect of latency was low.
+* One addition to this, one feature has been added: The solution uses a weighted average of previous control outputs (it is called historic steering and throttle value) with current predicted ones. This increased smootheness and robustness for partial bad model predictions.
 
-Help your fellow students!
+## Simulation
 
-We decided to create Makefiles with cmake to keep this project as platform
-agnostic as possible. Similarly, we omitted IDE profiles in order to we ensure
-that students don't feel pressured to use one IDE or another.
+The vehicle must successfully drive a lap around the track.
 
-However! I'd love to help people get up and running with their IDEs of choice.
-If you've created a profile for an IDE that you think other students would
-appreciate, we'd love to have you add the requisite profile files and
-instructions to ide_profiles/. For example if you wanted to add a VS Code
-profile, you'd add:
+No tire may leave the drivable portion of the track surface. The car may not pop up onto ledges or roll over any surfaces that would otherwise be considered unsafe (if humans were in the vehicle).
 
-* /ide_profiles/vscode/.vscode
-* /ide_profiles/vscode/README.md
+* As can be seen in the result/ folder, the car does drive multiple laps on the track.
 
-The README should explain what the profile does, how to take advantage of it,
-and how to install it.
-
-Frankly, I've never been involved in a project with multiple IDE profiles
-before. I believe the best way to handle this would be to keep them out of the
-repo root to avoid clutter. My expectation is that most profiles will include
-instructions to copy files to a new location to get picked up by the IDE, but
-that's just a guess.
-
-One last note here: regardless of the IDE used, every submitted project must
-still be compilable with cmake and make./
