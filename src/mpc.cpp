@@ -6,6 +6,9 @@
 
 using CppAD::AD;
 
+const int MPC::kStateSize = 4;
+const int MPC::kActuatorSize = 2;
+
 MPC::MPC()
 {
     historic_steering.resize(N - 1);
