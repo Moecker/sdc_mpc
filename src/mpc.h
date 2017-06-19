@@ -19,8 +19,8 @@ class MPC
     static constexpr size_t N = 8;
     static constexpr double dt = 0.5;
 
-    static constexpr int kStateSize = 4;
-    static constexpr int kActuatorSize = 2;
+    static const int kStateSize = 4;
+    static const int kActuatorSize = 2;
 
     // This value assumes the model presented in the classroom is used.
     //
